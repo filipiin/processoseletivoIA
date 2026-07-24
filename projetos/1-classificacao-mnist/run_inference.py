@@ -11,7 +11,7 @@ import tensorflow as tf
 #   3. Imprimir no terminal, para cada amostra: classe predita vs. classe real
 # ---------------------------------------------------------------------------
 
-N_SAMPLES = 5
+N_SAMPLES = 14
 
 
 def main():
