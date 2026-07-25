@@ -85,28 +85,56 @@ projetos/1-classificacao-mnist/
 
 ## 📝 Relatório do Candidato
 
-👤 **Nome Completo:**
+👤 **Filipe Leite Ribeiro:**
 
 ### 1️⃣ Resumo da Arquitetura do Modelo
 
-Descreva, em palavras, a arquitetura da CNN implementada em `train_model.py` (número de blocos convolucionais, uso de batch normalization/dropout, estratégia de validação/early stopping).
+A rede neural construída é uma CNN (Rede Neural Convolucional) enxuta e eficiente, dividida em duas grandes partes:
+
+Extração de Características (3 Blocos): Cada bloco conta com uma camada Conv2D (começando com 32 filtros, depois 64 e 128) para capturar desde linhas simples até padrões complexos. Logo após, aplico um BatchNormalization para estabilizar o aprendizado numérico e um MaxPooling2D (2x2) para reduzir o peso computacional.
+
+Classificação: Após achatar os dados (Flatten), passo por uma camada Dense de 128 neurônios. Para segurar o overfitting, aplico um Dropout de 30% (desativando neurônios aleatórios). A saída é uma Dense de 10 neurônios com ativação softmax, gerando as probabilidades para os dígitos de 0 a 9.
+
+Treinamento e Validação: Separei 10% dos dados para validação (validation_split=0.1). Usei o callback de EarlyStopping (paciência = 2) monitorando a val_loss. Assim, se o modelo parar de aprender, o treino é abortado e os melhores pesos são automaticamente restaurados (restore_best_weights=True).
 
 ### 2️⃣ Bibliotecas Utilizadas
 
-Liste as principais bibliotecas utilizadas, preferencialmente com suas versões.
+tensorflow (v2.15.1): O motor principal do projeto, usado tanto para treinar (Keras) quanto para converter o modelo (TFLite).
+
+numpy (v1.26.4): Essencial para a manipulação rápida dos arrays das imagens.
+
+os (nativa do Python): Utilizada para ler o tamanho final dos arquivos no disco.Liste as principais bibliotecas utilizadas, preferencialmente com suas versões.
 
 ### 3️⃣ Técnica de Otimização do Modelo
 
-Explique qual técnica foi utilizada para otimizar o modelo em `optimize_model.py`.
+A técnica aplicada foi a Dynamic Range Quantization (habilitada através do comando converter.optimizations = [tf.lite.Optimize.DEFAULT]).
+
+De forma simples: ela pega os "pesos" da rede, que originalmente estão em formato float32 (ponto flutuante, pesados), e os converte para int8 (inteiros, leves). É um atalho excelente para encolher drasticamente o tamanho do arquivo para rodar em dispositivos Edge, sem precisar de um dataset de calibração extra.
 
 ### 4️⃣ Resultados Obtidos
 
-Informe a acurácia de validação obtida e o tamanho dos arquivos `model.h5` e `model.tflite`.
+Acurácia: O modelo atingiu uma excelente acurácia de validação de 99,42% (com perda em 0,0261). No teste cego, cravou 99,39%.
+
+Tamanhos dos Arquivos:
+
+model.h5 (Original): 2,91 MB
+
+model.tflite (Otimizado): 247,73 KB
+
+Impacto: Conseguimos uma redução de 91,5% no tamanho do modelo, o que o torna ideal para aplicações embarcadas.
 
 ### 5️⃣ Comentários Adicionais (Opcional)
 
-Dificuldades encontradas, decisões técnicas importantes, limitações do modelo, aprendizados durante o desafio.
+A escolha dos hiperparâmetros fez bastante diferença na eficiência do código. Dobrar os filtros convolucionais a cada bloco (32 > 64 > 128) é uma estratégia bem clássica que funcionou muito bem, pois evita desperdiçar poder de processamento logo na entrada. O dropout de 30% foi o "sweet spot": segurou a rede para não decorar o MNIST, mas manteve informação suficiente para a alta acurácia.
+
+Um aprendizado importante sobre a otimização de Edge: embora a Dynamic Range Quantization seja fantástica para salvar espaço de armazenamento, as ativações durante a inferência ainda rodam em float. Isso significa que ganhamos muito em "tamanho no disco", mas o ganho em "velocidade de processamento" não é tão extremo. Para um ambiente de produção com hardware extremamente restrito, o próximo passo lógico seria testar uma Full Integer Quantization.
 
 ### 6️⃣ Exemplo de Inferência
 
-Cole a saída do terminal ao rodar `run_inference.py` (predito vs. real para as 5+ amostras), e comente brevemente se houve algum caso interessante (acerto ou erro) entre as amostras testadas.
+Rodando inferência em 5 amostras usando model.tflite:
+
+Amostra 1: predito=7 | real=7
+Amostra 2: predito=2 | real=2
+Amostra 3: predito=1 | real=1
+Amostra 4: predito=0 | real=0
+Amostra 5: predito=4 | real=4

@@ -25,7 +25,7 @@ def prepare_dataset():
 
     # Normalização dos pixels 
     # Conversão de uint8  para float32 no intervalo [0,1] 
-    # Para evitar overflow e acelerar o treino
+    # Afim de evitar overflow e acelerar o treino
     # Ajusta o formato das imagens, insere canal único (1) com o açucar sintatico [..., None]
     # Entregando tensores 4D (60000,28,28,1) compatíveis com a assinatura da Conv2D
     x_train = (x_train.astype("float32") / 255.0)[..., None]
@@ -41,11 +41,11 @@ def create_model():
     # Define o formato de entrada (28x28 pixels, 1 canal de cor)
     net.add(keras.Input(shape=(28, 28, 1)))
     
-    # FASE 1: Extração de Características
+    # Extração de Características
     
     # Bloco 01 convulacionbal 
     # Aprende características simples (Detecção de bordas e padrões simples)
-    # Usa 32 filtros 3x3
+    # Usando 32 filtros 3x3
     net.add(layers.Conv2D(filters=32, kernel_size=(3, 3), padding="same", activation="relu"))
 
     # Mantém esses números em uma escala controlada
@@ -67,15 +67,17 @@ def create_model():
     net.add(layers.BatchNormalization())
     net.add(layers.MaxPooling2D(pool_size=(2, 2)))
 
-    # FASE 2: Classificação
+    # Classificação
     
-    # Vetoriza os mapas de características 3D para 1D
+    # Transforma a saída convolucional em um vetor unidemnsional
+    # Para fornerver para as camadas ocultas
     net.add(layers.Flatten())
     
-    # Camada oculta totalmente conectada
+    # Camada oculta
+    # Combina todas as caracteristicas aprendidas
     net.add(layers.Dense(units=128, activation="relu"))
     
-    # Dropout para regularização (evita overfitting)
+    # Dropout para regularização (reduzir overfitting)
     net.add(layers.Dropout(rate=0.3))
     
     # Camada de saída com 10 neurônios (probabilidade para os dígitos 0-9)
@@ -96,7 +98,7 @@ def create_model():
     return net
 
 def train_model(model, X_train, Y_train):
-    """Executa o ciclo de treinamento da rede neural com monitoramento de validação."""
+    #Executa o ciclo de treinamento da rede neural com monitoramento de validação.
 
     # Previne overfitting interrompendo o treino se a rede parar de aprender
     es_callback = keras.callbacks.EarlyStopping(
@@ -135,7 +137,7 @@ def train_model(model, X_train, Y_train):
 
 
 def evaluate_model(model, X_test, Y_test):
-    """Afere a capacidade de generalização do modelo em dados não vistos."""
+    #Afere a capacidade de generalização do modelo em dados não vistos
     
     loss, accuracy = model.evaluate(X_test, Y_test, verbose=0)
 
@@ -145,7 +147,7 @@ def evaluate_model(model, X_test, Y_test):
 
 
 def save_model(model, filename="model.h5"):
-    """Exporta a arquitetura e os pesos aprendidos para o disco."""
+    #Exporta a arquitetura e os pesos aprendidos para o disco
     
     model.save(filename)
     print(f"Sucesso: Rede neural exportada para '{filename}'.")
